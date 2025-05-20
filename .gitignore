@@ -1,0 +1,30 @@
+# Dart/Pub
+.dart_tool/
+.packages
+.pub-cache/
+build/
+*.lock
+
+# Flutter
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# IntelliJ/Android Studio/VSCode
+.idea/
+*.iml
+.vscode/
+
+# macOS/Linux/Windows
+.DS_Store
+*.swp
+*.swo
+*.orig
+
+# Logs/Temp
+*.log
+*.tmp
+*.bak
+
+# Web
+web/build/
+web/.dart_tool/
