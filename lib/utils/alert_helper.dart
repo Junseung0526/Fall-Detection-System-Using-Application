@@ -2,6 +2,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:audioplayers/audioplayers.dart';
+
+final AudioPlayer audioPlayer = AudioPlayer();
+
+void playAlertSound() async {
+  await audioPlayer.setReleaseMode(ReleaseMode.loop);
+  await audioPlayer.play(AssetSource('sounds/alarm.wav'));
+}
+
+void stopAlertSound() async {
+  await audioPlayer.stop();
+}
 
 class AlertHelper {
   static const String _prefsKey = 'guardian_contact';
@@ -17,12 +29,15 @@ class AlertHelper {
       return;
     }
 
-    Timer? countdownTimer;
     int countdown = 10;
+    Timer? countdownTimer;
 
+    // 사운드 먼저 재생
+    playAlertSound();
+
+    // 보호자에게 문자 보내기
     Future<void> sendAlertToGuardian() async {
       const message = '낙상이 감지되었습니다! 즉시 확인해주세요.';
-
       final Uri smsUri = Uri(
         scheme: 'sms',
         path: guardianPhoneNumber,
@@ -47,19 +62,18 @@ class AlertHelper {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            if (countdownTimer == null) {
-              countdownTimer =
-                  Timer.periodic(const Duration(seconds: 1), (timer) {
-                    countdown--;
-                    if (countdown <= 0) {
-                      timer.cancel();
-                      Navigator.of(context).pop();
-                      sendAlertToGuardian();
-                    } else {
-                      setState(() {});
-                    }
-                  });
-            }
+            // 타이머 시작
+            countdownTimer ??= Timer.periodic(const Duration(seconds: 1), (timer) {
+              countdown--;
+              if (countdown <= 0) {
+                timer.cancel();
+                Navigator.of(context).pop();
+                stopAlertSound();
+                sendAlertToGuardian();
+              } else {
+                setState(() {});
+              }
+            });
 
             return AlertDialog(
               title: const Text("낙상 경고"),
@@ -68,6 +82,7 @@ class AlertHelper {
                 TextButton(
                   onPressed: () {
                     countdownTimer?.cancel();
+                    stopAlertSound();
                     Navigator.of(context).pop();
                   },
                   child: const Text("취소"),
@@ -75,6 +90,7 @@ class AlertHelper {
                 TextButton(
                   onPressed: () {
                     countdownTimer?.cancel();
+                    // stopAlertSound();
                     Navigator.of(context).pop();
                     sendAlertToGuardian();
                   },
