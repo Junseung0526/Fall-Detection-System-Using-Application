@@ -1,16 +1,83 @@
-# iot
+# 낙상 감지 IoT 앱
 
-A new Flutter project.
+![image](https://github.com/user-attachments/assets/1f7d4aee-9461-49de-ad8d-e90c74471424)
 
-## Getting Started
 
-This project is a starting point for a Flutter application.
+##
 
-A few resources to get you started if this is your first Flutter project:
+## 프로젝트 개요
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+본 프로젝트는 **아두이노 센서**와 **Flutter 앱**, 그리고 **Firebase**를 활용하여 낙상 사고를 감지하고 보호자에게 **자동으로 문자 알림을 전송**하는 시스템입니다.  
+또한, 사용자 상태를 기록하고 훈련 기능까지 제공하여 실생활 적용 가능성을 높였습니다.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+##
+
+## 시스템 구성 요소
+
+### 1. Flutter 모바일 앱
+- 아두이노와 Bluetooth 통신
+- 센서 데이터 수신 및 낙상 판단
+- 사용자 훈련 모드 제공
+- 감정 기록 기능
+
+### 2. 아두이노 센서
+- 낙상 감지를 위한 가속도 센서 장착
+- 블루투스를 통해 Flutter 앱에 데이터 전송
+
+### 3. Firebase 백엔드
+- Firebase Functions를 이용한 문자 전송 트리거
+- Firestore/Realtime DB에 사용자 정보 및 감정 기록 저장
+
+##
+
+## 주요 기능 흐름
+
+### 앱 실행 및 설정
+- 권한 요청 (Bluetooth, 위치)
+- Bluetooth 페어링 및 연결
+- 훈련 모드 진입 또는 낙상 감지 대기
+
+### 낙상 감지
+- 센서 데이터 분석 후 낙상 판단
+- 위치 정보 획득 및 보호자 정보 확인
+- Firebase Functions → 문자 전송 (SMS API 활용)
+- 보호자 응답 여부 확인
+
+### 부가 기능
+- 감정 기록 (슬라이더/이모지 등 UI로 입력)
+- 기록 저장 및 조회
+- 훈련 결과 확인 및 점수 표시
+
+##
+
+## 기술 스택
+
+| 항목             | 기술                         |
+|------------------|------------------------------|
+| 프론트엔드       | Flutter                      |
+| 하드웨어         | Arduino + Bluetooth Module   |
+| 백엔드           | Firebase Functions           |
+| 문자 전송        | 외부 SMS API (알리고 등 생략, 커스텀 방식 사용)  |
+| 문자 전송        | 현 코드에는 sms로 바로 가도록 설정함  |
+
+##
+
+## 예외 처리
+
+- Bluetooth 미연결 시 사용자에게 재시도 요청
+- 위치 수신 실패 시 기본 메시지로 문자 전송
+- 권한 거부 시 안내 메시지 출력 및 설정 유도
+- 센서 오류 감지 시 앱 내 경고 출력
+
+##
+
+## 향후 확장 가능성
+
+- 보호자 앱 연동
+- 음성 명령 인식 기능 추가
+- AI 기반 낙상 예측 알고리즘 적용
+- 실시간 모니터링 웹 대시보드 개발
+
+##
+
+> ⚙️ 이 프로젝트는 실제 상황에서 낙상 사고를 빠르게 인식하고 가족 및 보호자가 즉시 조치할 수 있도록 돕기 위해 설계되었습니다.
