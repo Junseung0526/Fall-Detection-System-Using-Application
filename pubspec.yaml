@@ -11,23 +11,12 @@ dependencies:
     sdk: flutter
   url_launcher: ^6.2.5
   shared_preferences: ^2.1.0
-  # 아이콘
   cupertino_icons: ^1.0.8
-
-  # 🟦 블루투스 (아두이노와 통신용)
   flutter_blue_plus: ^1.28.0
-
-  # 🔔 로컬 알림 (낙상 시 사용자에게 알림)
   flutter_local_notifications: ^17.1.0
-
-  # 🌀 애니메이션 (훈련 기능에 사용할 Lottie)
   lottie: ^3.1.0
-
-  # 🔥 Firebase 연동 (원격 푸시 알림을 위해)
   firebase_core: ^2.28.0
   firebase_messaging: ^14.7.10
-
-  # ⏱️ 상태 관리/애니메이션 (선택)
   provider: ^6.1.2
 
 dev_dependencies:
@@ -38,6 +27,5 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # 애셋(애니메이션 JSON 등)을 여기에 등록해야 합니다.
   assets:
-    - assets/animations/          # 예: Lottie 애니메이션 파일들
+    - assets/animations/

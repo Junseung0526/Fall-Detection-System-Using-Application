@@ -1,10 +1,22 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class AlertHelper {
-  static void showWarningAlert(BuildContext context,
-      String guardianPhoneNumber) {
+  static const String _prefsKey = 'guardian_contact';
+
+  static void showWarningAlert(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    final guardianPhoneNumber = prefs.getString(_prefsKey);
+
+    if (guardianPhoneNumber == null || guardianPhoneNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('보호자 연락처가 등록되어 있지 않습니다.')),
+      );
+      return;
+    }
+
     Timer? countdownTimer;
     int countdown = 10;
 
@@ -35,7 +47,6 @@ class AlertHelper {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            // 타이머는 이곳에서 한 번만 생성
             if (countdownTimer == null) {
               countdownTimer =
                   Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -51,30 +62,29 @@ class AlertHelper {
             }
 
             return AlertDialog(
-              title: const Text("⚠️ 경고 알림"),
-              content: Text(
-                  "낙상이 감지되었습니다!\n10초 안에 취소하지 않으면 보호자에게 자동으로 연락이 갑니다.\n\n남은 시간: $countdown 초"),
+              title: const Text("낙상 경고"),
+              content: Text("보호자에게 자동으로 메시지를 보냅니다: $countdown 초 후"),
               actions: [
                 TextButton(
                   onPressed: () {
                     countdownTimer?.cancel();
                     Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('경고 알림이 취소되었습니다.')),
-                    );
                   },
-                  child: const Text(
-                    "취소",
-                    style: TextStyle(color: Colors.redAccent),
-                  ),
+                  child: const Text("취소"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    countdownTimer?.cancel();
+                    Navigator.of(context).pop();
+                    sendAlertToGuardian();
+                  },
+                  child: const Text("즉시 보내기"),
                 ),
               ],
             );
           },
         );
       },
-    ).then((_) {
-      countdownTimer?.cancel();
-    });
+    );
   }
 }

@@ -68,7 +68,18 @@ class _MainMenuState extends State<MainMenu> {
     if (_isScanning) return;
 
     setState(() => _isScanning = true);
-    final success = await bleManager.scanAndConnect(Constants.bleDeviceName);
+
+    bool success = false;
+    int retryCount = 0;
+    const maxRetries = 5;
+
+    while (!success && retryCount < maxRetries) {
+      success = await bleManager.scanAndConnect(Constants.bleDeviceName);
+      retryCount++;
+      if (!success) {
+        await Future.delayed(const Duration(seconds: 2));
+      }
+    }
 
     setState(() {
       _isScanning = false;
@@ -77,20 +88,18 @@ class _MainMenuState extends State<MainMenu> {
 
     _showSnackBar(success
         ? "BLE 연결 성공: ${_device?.name ?? '알 수 없음'}"
-        : "BLE 연결 실패");
+        : "BLE 연결 실패: 재시도 $retryCount회 실패");
   }
 
   void _showWarningDialog() {
-    final guardianContact = _savedGuardianContact; // 예: 저장된 보호자 번호 변수
-
-    if (guardianContact == null || guardianContact.isEmpty) {
+    if (_savedGuardianContact == null || _savedGuardianContact!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('보호자 연락처를 먼저 등록해주세요.')),
       );
       return;
     }
 
-    AlertHelper.showWarningAlert(context, guardianContact);
+    AlertHelper.showWarningAlert(context);
   }
 
   void _showSnackBar(String message) {
@@ -237,7 +246,7 @@ class _MainMenuState extends State<MainMenu> {
       onPressed: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => TrainingPage()),  // 클래스 이름 대문자 주의
+          MaterialPageRoute(builder: (context) => TrainingPage()),
         );
       },
       style: ElevatedButton.styleFrom(
