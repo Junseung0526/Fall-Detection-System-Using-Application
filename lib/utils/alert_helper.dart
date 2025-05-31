@@ -18,7 +18,7 @@ void stopAlertSound() async {
 class AlertHelper {
   static const String _prefsKey = 'guardian_contact';
 
-  static void showWarningAlert(BuildContext context) async {
+  static void showWarningAlert(BuildContext context, String latitude, String longitude) async {
     final prefs = await SharedPreferences.getInstance();
     final guardianPhoneNumber = prefs.getString(_prefsKey);
 
@@ -37,7 +37,9 @@ class AlertHelper {
 
     // 보호자에게 문자 보내기
     Future<void> sendAlertToGuardian() async {
-      const message = '낙상이 감지되었습니다! 즉시 확인해주세요.';
+      final locationText = " 위치: https://maps.google.com/?q=$latitude,$longitude";
+      final message = '낙상이 감지되었습니다! 즉시 확인해주세요.' + locationText;
+
       final Uri smsUri = Uri(
         scheme: 'sms',
         path: guardianPhoneNumber,
@@ -62,7 +64,6 @@ class AlertHelper {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            // 타이머 시작
             countdownTimer ??= Timer.periodic(const Duration(seconds: 1), (timer) {
               countdown--;
               if (countdown <= 0) {
@@ -90,7 +91,7 @@ class AlertHelper {
                 TextButton(
                   onPressed: () {
                     countdownTimer?.cancel();
-                    // stopAlertSound();
+                    stopAlertSound();
                     Navigator.of(context).pop();
                     sendAlertToGuardian();
                   },

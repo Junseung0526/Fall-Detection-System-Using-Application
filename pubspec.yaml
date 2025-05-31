@@ -12,6 +12,7 @@ dependencies:
 
   js: ^0.6.7
   audioplayers: ^5.2.1
+  geolocator: ^10.1.0
   url_launcher: ^6.2.5
   shared_preferences: ^2.1.0
   cupertino_icons: ^1.0.8

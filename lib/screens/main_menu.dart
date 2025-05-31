@@ -99,7 +99,11 @@ class _MainMenuState extends State<MainMenu> {
       return;
     }
 
-    AlertHelper.showWarningAlert(context);
+    // 테스트용 GPS 위치 (서울 시청 좌표)
+    const String lat = "37.5665";
+    const String lon = "126.9780";
+
+    AlertHelper.showWarningAlert(context, lat, lon);
   }
 
   void _showSnackBar(String message) {
