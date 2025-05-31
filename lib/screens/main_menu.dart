@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart';
+
 import 'training_page.dart';
 import '../utils/ble_manager.dart';
 import '../utils/alert_helper.dart';
@@ -12,7 +15,7 @@ class MainMenu extends StatefulWidget {
 }
 
 class _MainMenuState extends State<MainMenu> {
-  final BleManager bleManager = BleManager(); // ✅ 싱글톤 인스턴스
+  final BleManager bleManager = BleManager();
   final TextEditingController _guardianController = TextEditingController();
 
   bool _isScanning = false;
@@ -39,7 +42,6 @@ class _MainMenuState extends State<MainMenu> {
 
   Future<void> _saveGuardianContact() async {
     final input = _guardianController.text.trim();
-
     if (input.isEmpty) {
       _showSnackBar("보호자 연락처를 입력해주세요.");
       return;
@@ -86,22 +88,63 @@ class _MainMenuState extends State<MainMenu> {
       _device = success ? bleManager.connectedDevice : null;
     });
 
+    if (success) {
+      _listenToBleNotifications();
+    }
+
     _showSnackBar(success
         ? "BLE 연결 성공: ${_device?.name ?? '알 수 없음'}"
         : "BLE 연결 실패: 재시도 $retryCount회 실패");
   }
 
-  void _showWarningDialog() {
-    if (_savedGuardianContact == null || _savedGuardianContact!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('보호자 연락처를 먼저 등록해주세요.')),
-      );
+  void _listenToBleNotifications() {
+    final characteristic = bleManager.notifyCharacteristic;
+    if (characteristic != null) {
+      characteristic.setNotifyValue(true);
+      characteristic.onValueReceived.listen((value) {
+        final data = utf8.decode(value);
+        if (data.startsWith("FALL:")) {
+          final coords = data.replaceFirst("FALL: ", "").split(",");
+          if (coords.length == 2) {
+            final lat = coords[0].trim();
+            final lon = coords[1].trim();
+            print("📍 BLE 수신 위치: $lat, $lon");
+
+            if (_savedGuardianContact != null && _savedGuardianContact!.isNotEmpty) {
+              AlertHelper.showWarningAlert(context, lat, lon);
+            } else {
+              _showSnackBar("보호자 연락처가 등록되어 있지 않습니다.");
+            }
+          }
+        }
+      });
+    }
+  }
+
+  Future<void> _showLocationBasedTestAlert() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      _showSnackBar("GPS가 비활성화되어 있습니다.");
       return;
     }
 
-    // 테스트용 GPS 위치 (서울 시청 좌표)
-    const String lat = "37.5665";
-    const String lon = "126.9780";
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        _showSnackBar("GPS 권한이 거부되었습니다.");
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      _showSnackBar("GPS 권한이 영구적으로 거부되었습니다.");
+      return;
+    }
+
+    Position position = await Geolocator.getCurrentPosition();
+    String lat = position.latitude.toStringAsFixed(6);
+    String lon = position.longitude.toStringAsFixed(6);
 
     AlertHelper.showWarningAlert(context, lat, lon);
   }
@@ -138,7 +181,7 @@ class _MainMenuState extends State<MainMenu> {
             const SizedBox(height: 80),
             _buildTrainingButton(),
             const SizedBox(height: 60),
-            _buildWarningTestButton(),
+            _buildWarningTestButton(), // ✅ 위치기반 경고 테스트 버튼
           ],
         ),
       ),
@@ -270,7 +313,7 @@ class _MainMenuState extends State<MainMenu> {
     final buttonRadius = BorderRadius.circular(16);
 
     return ElevatedButton(
-      onPressed: _showWarningDialog,
+      onPressed: _showLocationBasedTestAlert,
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16),
         backgroundColor: Colors.redAccent,
@@ -278,7 +321,7 @@ class _MainMenuState extends State<MainMenu> {
         elevation: 6,
       ),
       child: const Text(
-        "  ⚠️ 경고 알림 테스트  ",
+        "  ⚠️ GPS 기반 경고 테스트  ",
         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black),
       ),
     );

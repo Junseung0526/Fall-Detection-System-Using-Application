@@ -32,13 +32,12 @@ class AlertHelper {
     int countdown = 10;
     Timer? countdownTimer;
 
-    // 사운드 먼저 재생
+    // 사운드 재생
     playAlertSound();
 
-    // 보호자에게 문자 보내기
+    // 보호자에게 문자 전송 함수
     Future<void> sendAlertToGuardian() async {
-      final locationText = " 위치: https://maps.google.com/?q=$latitude,$longitude";
-      final message = '낙상이 감지되었습니다! 즉시 확인해주세요.' + locationText;
+      final message = '낙상이 감지되었습니다!\n위치: https://maps.google.com/?q=$latitude,$longitude';
 
       final Uri smsUri = Uri(
         scheme: 'sms',
