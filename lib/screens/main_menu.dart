@@ -4,15 +4,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'training_page.dart';
 import '../utils/ble_manager.dart';
 import '../utils/alert_helper.dart';
-import '../utils/constants.dart';
 
 class MainMenu extends StatefulWidget {
+  const MainMenu({super.key});
   @override
   State<MainMenu> createState() => _MainMenuState();
 }
 
 class _MainMenuState extends State<MainMenu> {
-  final BleManager bleManager = BleManager();
+  final BleManager bleManager = BleManager(); // ✅ 싱글톤 인스턴스
   final TextEditingController _guardianController = TextEditingController();
 
   bool _isScanning = false;
@@ -74,7 +74,7 @@ class _MainMenuState extends State<MainMenu> {
     const maxRetries = 5;
 
     while (!success && retryCount < maxRetries) {
-      success = await bleManager.scanAndConnect(Constants.bleDeviceName);
+      success = await bleManager.scanAndConnect();
       retryCount++;
       if (!success) {
         await Future.delayed(const Duration(seconds: 2));
