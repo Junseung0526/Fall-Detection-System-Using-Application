@@ -29,6 +29,40 @@ class _MainMenuState extends State<MainMenu> {
   void initState() {
     super.initState();
     _loadGuardianContact();
+    bleManager.addNotifyCallback(_onBleNotify); // ✅ notify 콜백 등록
+  }
+
+  @override
+  void dispose() {
+    bleManager.removeNotifyCallback(_onBleNotify); // ✅ notify 콜백 제거
+    _guardianController.dispose();
+    super.dispose();
+  }
+
+  void _onBleNotify(List<int> value) {
+    final data = utf8.decode(value).trim();
+    print("📲 수신된 BLE 메시지: $data");
+
+    if (data == "EMERGENCY") {
+      playAlertSound();
+      AlertHelper.showEmergencyAlert(context,bleManager);
+      return;
+    }
+
+    if (data.startsWith("FALL:")) {
+      final coords = data.replaceFirst("FALL:", "").split(",");
+      if (coords.length == 2) {
+        final lat = coords[0].trim();
+        final lon = coords[1].trim();
+        print("📍 BLE 수신 위치: $lat, $lon");
+
+        if (_savedGuardianContact != null && _savedGuardianContact!.isNotEmpty) {
+          AlertHelper.showWarningAlert(context, lat, lon);
+        } else {
+          _showSnackBar("보호자 연락처가 등록되어 있지 않습니다.");
+        }
+      }
+    }
   }
 
   Future<void> _loadGuardianContact() async {
@@ -78,9 +112,7 @@ class _MainMenuState extends State<MainMenu> {
     while (!success && retryCount < maxRetries) {
       success = await bleManager.scanAndConnect();
       retryCount++;
-      if (!success) {
-        await Future.delayed(const Duration(seconds: 2));
-      }
+      if (!success) await Future.delayed(const Duration(seconds: 2));
     }
 
     setState(() {
@@ -88,37 +120,17 @@ class _MainMenuState extends State<MainMenu> {
       _device = success ? bleManager.connectedDevice : null;
     });
 
-    if (success) {
-      _listenToBleNotifications();
-    }
-
     _showSnackBar(success
         ? "BLE 연결 성공: ${_device?.name ?? '알 수 없음'}"
         : "BLE 연결 실패: 재시도 $retryCount회 실패");
   }
 
-  void _listenToBleNotifications() {
-    final characteristic = bleManager.notifyCharacteristic;
-    if (characteristic != null) {
-      characteristic.setNotifyValue(true);
-      characteristic.onValueReceived.listen((value) {
-        final data = utf8.decode(value);
-        if (data.startsWith("FALL:")) {
-          final coords = data.replaceFirst("FALL: ", "").split(",");
-          if (coords.length == 2) {
-            final lat = coords[0].trim();
-            final lon = coords[1].trim();
-            print("📍 BLE 수신 위치: $lat, $lon");
-
-            if (_savedGuardianContact != null && _savedGuardianContact!.isNotEmpty) {
-              AlertHelper.showWarningAlert(context, lat, lon);
-            } else {
-              _showSnackBar("보호자 연락처가 등록되어 있지 않습니다.");
-            }
-          }
-        }
-      });
-    }
+  void _disconnectBle() async {
+    await bleManager.disconnect();
+    setState(() {
+      _device = null;
+    });
+    _showSnackBar("BLE 연결이 해제되었습니다.");
   }
 
   Future<void> _showLocationBasedTestAlert() async {
@@ -156,13 +168,9 @@ class _MainMenuState extends State<MainMenu> {
   }
 
   @override
-  void dispose() {
-    _guardianController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final isConnected = _device != null;
+
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
@@ -176,12 +184,12 @@ class _MainMenuState extends State<MainMenu> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _buildGuardianContactSection(),
-            const SizedBox(height: 50),
-            _buildBleButton(),
-            const SizedBox(height: 80),
+            const SizedBox(height: 150),
+            isConnected ? _buildDisconnectButton() : _buildBleButton(),
+            const SizedBox(height: 150),
             _buildTrainingButton(),
-            const SizedBox(height: 60),
-            _buildWarningTestButton(), // ✅ 위치기반 경고 테스트 버튼
+            // const SizedBox(height: 60),
+            // _buildWarningTestButton(),
           ],
         ),
       ),
@@ -266,64 +274,71 @@ class _MainMenuState extends State<MainMenu> {
   }
 
   Widget _buildBleButton() {
-    final buttonRadius = BorderRadius.circular(16);
-    final isConnected = _device != null;
-
     return ElevatedButton(
-      onPressed: (isConnected || _isScanning) ? null : _connectToBle,
+      onPressed: _isScanning ? null : _connectToBle,
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 18),
-        backgroundColor: isConnected ? Colors.green : Colors.blueAccent,
-        shape: RoundedRectangleBorder(borderRadius: buttonRadius),
+        backgroundColor: Colors.grey,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 6,
       ),
       child: Text(
-        isConnected
-            ? "  BLE 연결됨: ${_device!.name}  "
-            : (_isScanning ? "  검색 중...  " : "  BLE 연결  "),
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+        _isScanning ? "  검색 중...  " : "  BLE 연결  ",
+        style: const TextStyle(fontSize: 50, fontWeight: FontWeight.w700,color: Colors.black),
+      ),
+    );
+  }
+
+  Widget _buildDisconnectButton() {
+    return ElevatedButton(
+      onPressed: _disconnectBle,
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        backgroundColor: Colors.grey,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 4,
+      ),
+      child: const Text(
+        "  BLE 연결 해제  ",
+        style: TextStyle(fontSize: 50, fontWeight: FontWeight.w600, color: Colors.black),
       ),
     );
   }
 
   Widget _buildTrainingButton() {
-    final buttonRadius = BorderRadius.circular(16);
-
     return ElevatedButton(
       onPressed: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => TrainingPage()),
+          MaterialPageRoute(builder: (context) => TrainingPage(bleManager: bleManager)),
         );
       },
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 18),
         backgroundColor: Colors.blueAccent,
-        shape: RoundedRectangleBorder(borderRadius: buttonRadius),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 6,
       ),
       child: const Text(
-        "  훈련 시작 화면으로 이동  ",
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.black),
+        "  훈련 시작  ",
+        style: TextStyle(fontSize: 70, fontWeight: FontWeight.w700, color: Colors.black),
       ),
     );
   }
 
-  Widget _buildWarningTestButton() {
-    final buttonRadius = BorderRadius.circular(16);
-
-    return ElevatedButton(
-      onPressed: _showLocationBasedTestAlert,
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        backgroundColor: Colors.redAccent,
-        shape: RoundedRectangleBorder(borderRadius: buttonRadius),
-        elevation: 6,
-      ),
-      child: const Text(
-        "  ⚠️ GPS 기반 경고 테스트  ",
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black),
-      ),
-    );
-  }
+  // Widget _buildWarningTestButton() {
+  //   return ElevatedButton(
+  //     onPressed: _showLocationBasedTestAlert,
+  //     style: ElevatedButton.styleFrom(
+  //       padding: const EdgeInsets.symmetric(vertical: 16),
+  //       backgroundColor: Colors.redAccent,
+  //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  //       elevation: 6,
+  //     ),
+  //     child: const Text(
+  //       "  ⚠️ GPS 기반 경고 테스트  ",
+  //       style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black),
+  //     ),
+  //   );
+  // }
 }
