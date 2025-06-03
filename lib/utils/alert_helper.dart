@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:geolocator/geolocator.dart';
 import 'ble_manager.dart'; // BleManager 사용 위해 import
 
 final AudioPlayer audioPlayer = AudioPlayer();
@@ -104,7 +105,7 @@ class AlertHelper {
     );
   }
 
-  /// 긴급 상황 감지 알림 (위치 없이, 상태 변경 포함)
+  /// 긴급 상황 감지 알림 (위치 포함)
   static void showEmergencyAlert(BuildContext context, BleManager bleManager) async {
     final prefs = await SharedPreferences.getInstance();
     final guardianPhoneNumber = prefs.getString(_prefsKey);
@@ -122,23 +123,34 @@ class AlertHelper {
     playAlertSound();
 
     Future<void> sendEmergencyMessage() async {
-      final message = '긴급 상황이 감지되었습니다! 빠른 확인이 필요합니다.';
+      final messagePrefix = '긴급 상황이 감지되었습니다! 빠른 확인이 필요합니다.';
 
-      final Uri smsUri = Uri(
-        scheme: 'sms',
-        path: guardianPhoneNumber,
-        queryParameters: {'body': message},
-      );
+      try {
+        Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+        final latitude = position.latitude.toStringAsFixed(6);
+        final longitude = position.longitude.toStringAsFixed(6);
+        final message = '$messagePrefix\n위치: https://maps.google.com/?q=$latitude,$longitude';
 
-      if (await canLaunchUrl(smsUri)) {
-        await launchUrl(smsUri, mode: LaunchMode.externalApplication);
-        bleManager.write("normal");                                             // 상태 복구 메시지 BLE로 전송
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('보호자에게 긴급 메시지를 보냈습니다!')),
+        final Uri smsUri = Uri(
+          scheme: 'sms',
+          path: guardianPhoneNumber,
+          queryParameters: {'body': message},
         );
-      } else {
+
+        if (await canLaunchUrl(smsUri)) {
+          await launchUrl(smsUri, mode: LaunchMode.externalApplication);
+          bleManager.write("normal"); // ✅ 상태 복구 메시지 BLE로 전송
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('보호자에게 긴급 메시지를 보냈습니다!')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('SMS 전송에 실패했습니다.')),
+          );
+        }
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('SMS 전송에 실패했습니다.')),
+          SnackBar(content: Text('위치 정보를 가져오는 데 실패했습니다: $e')),
         );
       }
     }
