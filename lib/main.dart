@@ -13,9 +13,9 @@ Future<void> requestPermissions() async {
   // 권한 결과 확인 및 로그 출력 (필요시 추가 처리 가능)
   statuses.forEach((permission, status) {
     if (!status.isGranted) {
-      debugPrint('❌ 권한 거부됨: $permission');
+      debugPrint('권한 거부됨: $permission');
     } else {
-      debugPrint('✅ 권한 허용됨: $permission');
+      debugPrint('권한 허용됨: $permission');
     }
   });
 }

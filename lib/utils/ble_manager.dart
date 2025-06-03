@@ -35,7 +35,7 @@ class BleManager {
             await FlutterBluePlus.stopScan();
             connectedDevice = result.device;
             await connectedDevice!.connect();
-            print("✅ 연결된 기기: ${connectedDevice!.name}");
+            print("연결된 기기: ${connectedDevice!.name}");
 
             List<BluetoothService> services = await connectedDevice!.discoverServices();
             for (var service in services) {
@@ -75,9 +75,9 @@ class BleManager {
           cb(value);
         }
       });
-      print("🔔 Notify 구독 시작됨");
+      print("Notify 구독 시작됨");
     } else {
-      print("⚠️ notifyCharacteristic이 null입니다.");
+      print("notifyCharacteristic이 null입니다.");
     }
   }
 
@@ -94,16 +94,16 @@ class BleManager {
   Future<void> cancelNotifySubscription() async {
     await _notifySubscription?.cancel();
     _notifySubscription = null;
-    print("🔕 Notify 구독 해제됨");
+    print("Notify 구독 해제됨");
   }
 
   /// 문자열을 BLE로 전송
   Future<void> write(String message) async {
     if (writeCharacteristic != null) {
       await writeCharacteristic!.write(utf8.encode(message), withoutResponse: true);
-      print("📤 BLE 문자열 전송: $message");
+      print("BLE 문자열 전송: $message");
     } else {
-      print("⚠️ writeCharacteristic이 null입니다.");
+      print("writeCharacteristic이 null입니다.");
     }
   }
 
@@ -111,9 +111,9 @@ class BleManager {
   Future<void> sendData(List<int> data) async {
     if (writeCharacteristic != null) {
       await writeCharacteristic!.write(data, withoutResponse: true);
-      print("📤 BLE 데이터 전송: $data");
+      print("BLE 데이터 전송: $data");
     } else {
-      print("⚠️ writeCharacteristic이 null입니다.");
+      print("writeCharacteristic이 null입니다.");
     }
   }
 
@@ -125,7 +125,7 @@ class BleManager {
     connectedDevice = null;
     writeCharacteristic = null;
     notifyCharacteristic = null;
-    print("🔌 BLE 연결 해제됨");
+    print("BLE 연결 해제됨");
   }
 
   /// 긴급 메시지 또는 FALL 수신 시 Alert 표시
@@ -135,7 +135,7 @@ class BleManager {
     addNotifyCallback((List<int> value) {
       try {
         String received = utf8.decode(value).trim();
-        print("📥 BLE 수신: $received");
+        print("BLE 수신: $received");
 
         if (received.toLowerCase() == 'emergency') {
           AlertHelper.showEmergencyAlert(context, this); // BleManager 인스턴스 전달
@@ -143,7 +143,7 @@ class BleManager {
           AlertHelper.showWarningAlert(context, lat, lon);
         }
       } catch (e) {
-        print("❌ 수신 메시지 디코딩 오류: $e");
+        print("수신 메시지 디코딩 오류: $e");
       }
     });
   }

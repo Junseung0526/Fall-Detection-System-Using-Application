@@ -139,7 +139,7 @@ class AlertHelper {
 
         if (await canLaunchUrl(smsUri)) {
           await launchUrl(smsUri, mode: LaunchMode.externalApplication);
-          bleManager.write("normal"); // ✅ 상태 복구 메시지 BLE로 전송
+          bleManager.write("normal"); // 상태 복구 메시지 BLE로 전송
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('보호자에게 긴급 메시지를 보냈습니다!')),
           );
@@ -174,7 +174,7 @@ class AlertHelper {
             });
 
             return AlertDialog(
-              title: const Text("⚠️ 긴급 상황 감지"),
+              title: const Text("긴급 상황 감지"),
               content: Text("보호자에게 자동으로 메시지를 보냅니다: $countdown 초 후"),
               actions: [
                 TextButton(

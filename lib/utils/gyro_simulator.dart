@@ -16,32 +16,32 @@
   
     void startListening() {
       bleManager.addNotifyCallback(_notifyHandler);
-      print('[GyroSimulator] ✅ 콜백 등록됨');
+      print('[GyroSimulator] 콜백 등록됨');
     }
   
     void stopListening() {
       bleManager.removeNotifyCallback(_notifyHandler);
-      print('[GyroSimulator] 🔕 콜백 해제됨');
+      print('[GyroSimulator] 콜백 해제됨');
     }
   
     void _handleNotify(List<int> value) {
       try {
-        print('[GyroSimulator] 📥 수신된 raw bytes: $value');
+        print('[GyroSimulator] 수신된 raw bytes: $value');
         String dataStr = utf8.decode(value).trim();
-        print('[GyroSimulator] 📄 수신된 문자열: "$dataStr"');
+        print('[GyroSimulator] 수신된 문자열: "$dataStr"');
   
         List<String> parts = dataStr.split(',');
         if (parts.length == 3) {
           double x = double.parse(parts[0]);
           double y = double.parse(parts[1]);
           double z = double.parse(parts[2]);
-          print('[GyroSimulator] ✅ 파싱 완료: x=$x, y=$y, z=$z');
+          print('[GyroSimulator] 파싱 완료: x=$x, y=$y, z=$z');
           onUpdate(x, y, z);
         } else {
-          print('[GyroSimulator] ⚠️ 데이터 형식 오류: 3개 미만 요소');
+          print('[GyroSimulator] 데이터 형식 오류: 3개 미만 요소');
         }
       } catch (e) {
-        print('[GyroSimulator] ❌ 자이로 데이터 파싱 실패: $e');
+        print('[GyroSimulator] 자이로 데이터 파싱 실패: $e');
       }
     }
   }
