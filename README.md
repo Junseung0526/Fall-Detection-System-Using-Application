@@ -4,6 +4,10 @@
 
 ##
 
+![낙상감지 시스템 프로젠테이션](https://www.canva.com/design/DAGo_TxTQ6U/zSMIZubTSzdvACtbEECz5w/view?utm_content=DAGo_TxTQ6U&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=hfe9a242975)
+
+##
+
 ## 프로젝트 개요
 
 본 프로젝트는 **아두이노 센서**, **Flutter 앱**, 그리고 **Firebase 백엔드**를 활용하여  
