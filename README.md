@@ -4,7 +4,7 @@
 
 ##
 
-![낙상감지 시스템 프로젠테이션](https://www.canva.com/design/DAGo_TxTQ6U/zSMIZubTSzdvACtbEECz5w/view?utm_content=DAGo_TxTQ6U&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=hfe9a242975)
+[낙상 감지 시스템 프로젠테이션](https://www.canva.com/design/DAGo_TxTQ6U/zSMIZubTSzdvACtbEECz5w/view?utm_content=DAGo_TxTQ6U&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=hfe9a242975)
 
 ##
 
